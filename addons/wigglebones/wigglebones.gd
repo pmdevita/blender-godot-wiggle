@@ -45,6 +45,10 @@ func update_bones():
 		return
 	print("all clear!")
 	
+	# Parent bones are a little special. They connect the physical bones
+	# to the rest of the armature.
+	# Child bones are the physics bones used for the rest of the simulation
+	
 	var wiggle_bone_names = []
 	var wiggle_bone_parents = []
 	
@@ -61,17 +65,19 @@ func update_bones():
 	var existing_wiggle = {}
 	
 	for child in wiggle_node.get_children():
-		if not child is PhysicalBone3D:
+		if not (child is PhysicalBone3D or child is BoneAttachment3D):
 			continue
 		var bone_name = child.bone_name
-		if bone_name in wiggle_bone_parents:
+		# Do we already have a parent bone for this?
+		if bone_name in wiggle_bone_parents and child is BoneAttachment3D:
 			wiggle_bone_parents.erase(bone_name)
+		# Do we already have a child bone for this?
 		if bone_name in wiggle_bone_names:
 			existing_wiggle[bone_name] = child
 	
 	for bone_name in wiggle_bone_parents:
-		var bone_node = generate_phy_bone(wiggle_node, bone_name)
-		configure_parent_bone(bone_node, bone_name)
+		var attachment_node = generate_attachment_bone(wiggle_node, bone_name)
+		configure_parent_bone(attachment_node, bone_name, skeleton)
 	
 	for bone in wiggle_node.bones.bones:
 		var bone_name = bone.bone_name
@@ -81,8 +87,19 @@ func update_bones():
 		else:
 			bone_node = generate_phy_bone(wiggle_node, bone_name)
 		configure_wiggle_bone(bone, bone_node)
-		
-		
+
+func generate_attachment_bone(wiggle_node, bone_name):
+	var scene_root = get_editor_interface().get_edited_scene_root()
+	var attachment_node = BoneAttachment3D.new()
+	var bone_node = PhysicalBone3D.new()
+	var collision_node = CollisionShape3D.new()
+	wiggle_node.add_child(attachment_node)
+	attachment_node.owner = scene_root
+	attachment_node.add_child(bone_node)
+	bone_node.owner = scene_root
+	bone_node.add_child(collision_node)
+	collision_node.owner = scene_root
+	return attachment_node
 		
 func generate_phy_bone(wiggle_node, bone_name):
 	var scene_root = get_editor_interface().get_edited_scene_root()
@@ -95,8 +112,16 @@ func generate_phy_bone(wiggle_node, bone_name):
 	return bone_node
 	
 
-func configure_parent_bone(bone_node, bone_name):
+func configure_parent_bone(attachment_node: BoneAttachment3D, bone_name, skeleton: Skeleton3D):
+	var bone_node = attachment_node.get_child(0)
 	var collision_node = bone_node.get_child(0)
+	
+	attachment_node.set_use_external_skeleton(true)
+	attachment_node.set_external_skeleton("../..")
+	attachment_node.bone_name = bone_name
+	attachment_node.visible = false
+	
+	attachment_node.name = bone_name + "_parent"
 	bone_node.name = bone_name + "_parent"
 	collision_node.name = bone_name + "_col"
 	bone_node.bone_name = bone_name
@@ -104,16 +129,28 @@ func configure_parent_bone(bone_node, bone_name):
 	shape.radius = 0.001
 	collision_node.shape = shape
 	
+	bone_node.joint_type = 5  # JOINT_TYPE_6DOF
+	for d in ["x", "y", "z"]:
+		bone_node.set("joint_constraints/%s/linear_limit_enabled" % d, true)
+		bone_node.set("joint_constraints/%s/linear_limit_upper" % d, 0)
+		bone_node.set("joint_constraints/%s/linear_limit_lower" % d, 0)
+		bone_node.set("joint_constraints/%s/angular_limit_upper" % d, 180)
+		bone_node.set("joint_constraints/%s/angular_limit_lower" % d, -180)
+		bone_node.set("joint_constraints/%s/angular_spring_enabled" % d, true)
 	
-func configure_wiggle_bone(bone, bone_node):
+func configure_wiggle_bone(bone, bone_node: PhysicalBone3D):
 	var bone_name = bone.bone_name
 	var collision_node = bone_node.get_child(0)
+	
 	bone_node.name = bone_name + "_wb"
 	collision_node.name = bone_name + "_col"
 	bone_node.bone_name = bone_name
+	
 	var shape = SphereShape3D.new()
 	shape.radius = max(0.001, bone.tail_radius)
 	collision_node.shape = shape
+	
+	bone_node.visible = false
 	bone_node.joint_type = 5  # JOINT_TYPE_6DOF
 	bone_node.mass = bone.tail_mass
 	for d in ["x", "y", "z"]:
