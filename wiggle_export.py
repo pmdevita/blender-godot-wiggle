@@ -1,7 +1,18 @@
+import bpy
+from bpy_extras.io_utils import ExportHelper
+from bpy.props import StringProperty, BoolProperty, EnumProperty
+from bpy.types import Operator
+from string import ascii_lowercase, digits
+from random import choice
+
+from wiggle_2 import WigglePanel
+
+ID_CHARS = ascii_lowercase + digits
+
 bl_info = {
     "name": "Wiggle Godot Export",
     "author": "Gonderage/pmdevita",
-    "version": (1, 0, 0),
+    "version": (1, 1, 0),
     "blender": (3, 00, 0),
     "location": "3d Viewport > Animation Panel",
     "description": "Export Wigglebone data for use in Godot",
@@ -10,24 +21,13 @@ bl_info = {
     "category": "Animation",
 }
 
-import bpy
-import json
-from bpy_extras.io_utils import ExportHelper
-from bpy.props import StringProperty, BoolProperty, EnumProperty
-from bpy.types import Operator
-from string import ascii_lowercase, digits
-from random import choice
-
-ID_CHARS = ascii_lowercase + digits
 
 def random_string(length):
     return "".join([choice(ID_CHARS) for i in range(length)])
 
 
-from wiggle_2 import WigglePanel
-
 class WIGGLE_PT_Export(WigglePanel, bpy.types.Panel):
-    bl_label = 'Wiggle 2 Export'
+    bl_label = "Wiggle 2 Export"
 
     def draw(self, context):
         layout = self.layout
@@ -35,6 +35,7 @@ class WIGGLE_PT_Export(WigglePanel, bpy.types.Panel):
         row = self.layout.row()
         row.scale_y = 3.0
         row.operator("wiggle.export")
+
 
 def write_some_data(context, filepath):
     scene = context.scene
@@ -51,7 +52,8 @@ def write_some_data(context, filepath):
     bones = []
     for wo in scene.wiggle.list:
         ob = scene.objects[wo.name]
-        if ob.wiggle_mute or ob.wiggle_freeze: continue
+        if ob.wiggle_mute or ob.wiggle_freeze:
+            continue
         for wb in wo.list:
             b = ob.pose.bones[wb.name]
             if b.wiggle_mute or not (b.wiggle_head or b.wiggle_tail):
@@ -64,7 +66,8 @@ def write_some_data(context, filepath):
     for bone in bones:
         subresource_id = f"Resource_{random_string(5)}"
         subresource_ids.append(subresource_id)
-        bone_data.append(f"""[sub_resource type="Resource" id="{subresource_id}"]
+        bone_data.append(
+            f"""[sub_resource type="Resource" id="{subresource_id}"]
 script = ExtResource("{wb_item_id}")
 bone_name = "{bone.name}"
 enable_head = {"true" if bone.wiggle_head and not bone.bone.use_connect else "false"}
@@ -80,7 +83,8 @@ tail_stiff = {bone.wiggle_stiff}
 tail_stretch = {bone.wiggle_stretch}
 tail_radius = {bone.wiggle_radius}
 tail_gravity = {bone.wiggle_gravity}
-""")
+"""
+        )
 
     file += "".join(bone_data)
 
@@ -92,12 +96,12 @@ bones = Array[ExtResource("{wb_item_id}")]([{', '.join([f'SubResource("{id}")' f
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(file)
 
-    return {'FINISHED'}
-
+    return {"FINISHED"}
 
 
 class WiggleExport(Operator, ExportHelper):
     """This appears in the tooltip of the operator and in the generated docs"""
+
     bl_idname = "wiggle.export"
     bl_label = "Export Wiggle to Godot"
 
@@ -106,7 +110,7 @@ class WiggleExport(Operator, ExportHelper):
 
     filter_glob: StringProperty(
         default="*.tres",
-        options={'HIDDEN'},
+        options={"HIDDEN"},
         maxlen=255,  # Max internal buffer length, longer would be clamped.
     )
 
@@ -144,7 +148,3 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-
-
-
-
