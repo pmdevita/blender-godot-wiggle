@@ -106,7 +106,7 @@ class WiggleExport(Operator, ExportHelper):
     bl_label = "Export Wiggle to Godot"
 
     # ExportHelper mixin class uses this
-    filename_ext = "_wb.tres"
+    filename_ext = ".tres"
 
     filter_glob: StringProperty(
         default="*.tres",
