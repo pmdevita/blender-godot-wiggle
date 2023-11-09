@@ -83,6 +83,7 @@ tail_stiff = {bone.wiggle_stiff}
 tail_stretch = {bone.wiggle_stretch}
 tail_radius = {bone.wiggle_radius}
 tail_gravity = {bone.wiggle_gravity}
+
 """
         )
 
