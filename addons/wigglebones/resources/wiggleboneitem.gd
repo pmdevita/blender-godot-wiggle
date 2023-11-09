@@ -16,11 +16,8 @@ class_name WiggleBoneItem
 @export var tail_stiff: float = 400.0
 @export var tail_stretch: float = 0.0
 @export var tail_radius: float = 0.0
+@export var tail_gravity: float = 1.0
 
 
-func _init(bone_name: String = "", has_head = false, head_damp = 1.0, head_mass = 1.0, head_stiff = 1.0, head_stretch = 400.0, head_radius = 0.0, has_tail = false, tail_damp = 1.0, tail_mass = 1.0, tail_stiff = 1.0, tail_stretch = 400.0, tail_radius = 0.0):
+func _init(bone_name: String = "", has_head = false, head_damp = 1.0, head_mass = 1.0, head_stiff = 1.0, head_stretch = 400.0, head_radius = 0.0, has_tail = false, tail_damp = 1.0, tail_mass = 1.0, tail_stiff = 1.0, tail_stretch = 400.0, tail_radius = 0.0, tail_gravity = 1.0):
 	pass
-
-#func _init(bone_name = ""):
-#	pass
-

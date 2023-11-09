@@ -92,13 +92,10 @@ func generate_attachment_bone(wiggle_node, bone_name):
 	var scene_root = get_editor_interface().get_edited_scene_root()
 	var attachment_node = BoneAttachment3D.new()
 	var bone_node = PhysicalBone3D.new()
-	var collision_node = CollisionShape3D.new()
 	wiggle_node.add_child(attachment_node)
 	attachment_node.owner = scene_root
 	attachment_node.add_child(bone_node)
 	bone_node.owner = scene_root
-	bone_node.add_child(collision_node)
-	collision_node.owner = scene_root
 	return attachment_node
 		
 func generate_phy_bone(wiggle_node, bone_name):
@@ -114,7 +111,6 @@ func generate_phy_bone(wiggle_node, bone_name):
 
 func configure_parent_bone(attachment_node: BoneAttachment3D, bone_name, skeleton: Skeleton3D):
 	var bone_node = attachment_node.get_child(0)
-	var collision_node = bone_node.get_child(0)
 	
 	attachment_node.set_use_external_skeleton(true)
 	attachment_node.set_external_skeleton("../..")
@@ -123,11 +119,7 @@ func configure_parent_bone(attachment_node: BoneAttachment3D, bone_name, skeleto
 	
 	attachment_node.name = bone_name + "_parent"
 	bone_node.name = bone_name + "_parent"
-	collision_node.name = bone_name + "_col"
 	bone_node.bone_name = bone_name
-	var shape = SphereShape3D.new()
-	shape.radius = 0.001
-	collision_node.shape = shape
 	
 	bone_node.joint_type = 5  # JOINT_TYPE_6DOF
 	for d in ["x", "y", "z"]:
@@ -153,6 +145,7 @@ func configure_wiggle_bone(bone, bone_node: PhysicalBone3D):
 	bone_node.visible = false
 	bone_node.joint_type = 5  # JOINT_TYPE_6DOF
 	bone_node.mass = bone.tail_mass
+	bone_node.gravity_scale = bone.tail_gravity
 	for d in ["x", "y", "z"]:
 		bone_node.set("joint_constraints/%s/linear_limit_enabled" % d, true)
 		bone_node.set("joint_constraints/%s/linear_limit_upper" % d, 0)
